@@ -1,19 +1,28 @@
 package com.example.bigvu_app;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SearchView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.android.volley.Request;
@@ -41,44 +50,87 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity {
-    private ListView mListView;
     private ArrayList<String> names = new ArrayList<>();
     private ArrayList<String> imageUrls = new ArrayList<>();
     private ArrayList<String> descriptions = new ArrayList<>();
     private ArrayList<String> texts = new ArrayList<>();
     private ArrayList<String> videoUrls = new ArrayList<>();
-    public ArrayList<ImageView> mImageViews = new ArrayList<>();
+
+    private static final String EXTRA_NAME = "com.example.bigvu_app.name";
+    private static final String EXTRA_DESCRIPTION = "com.example.bigvu_app.description";
+    private static final String EXTRA_TEXT = "com.example.bigvu_app.text";
+    private static final String EXTRA_VIDEO = "com.example.bigvu_app.video";
+
 
     private RequestQueue mQueue;
     public CustomItemList customItemList;
 
+    SearchView searchView;
     Handler mainHandler = new Handler();
     ProgressBar mProgressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.activity_main);
         mQueue = Volley.newRequestQueue(this);
         new fetchData().start();
 
-//        jsonParse();
+
+        searchView = (SearchView) findViewById(R.id.searchView);
 
         TextView textView = new TextView(this);
         textView.setTypeface(Typeface.DEFAULT_BOLD);
 
 
-        ListView listView=(ListView)findViewById(R.id.list);
+        ListView listView = (ListView) findViewById(R.id.list);
+        mProgressBar = (ProgressBar) findViewById(R.id.indeterminateBar);
 
-        customItemList = new CustomItemList(this, names, descriptions, mImageViews);
+        customItemList = new CustomItemList(this, names, descriptions, imageUrls);
         listView.setAdapter(customItemList);
-        Log.v("TAG","DONE");
-//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-//                //Toast.makeText(getApplicationContext(),"You Selected "+countryNames[position-1]+ " as Country",Toast.LENGTH_SHORT).show();        }
-//            });
-//        }
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+
+                Intent intent = new Intent(MainActivity.this, ItemActivity.class);
+                intent.putExtra(EXTRA_NAME, names.get(position));
+                intent.putExtra(EXTRA_DESCRIPTION, descriptions.get(position));
+                intent.putExtra(EXTRA_TEXT, texts.get(position));
+                intent.putExtra(EXTRA_VIDEO, videoUrls.get(position));
+                startActivity(intent);
+
+            }
+        });
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+//                for (int i = 0; i < descriptions.size(); i++) {
+//                    if (descriptions.get(i).contains(query)) {
+//                        customItemList.getFilter().filter(query);
+//                    } else {
+//                        Toast.makeText(MainActivity.this, "No Match found", Toast.LENGTH_LONG).show();
+//                        return false;
+//                    }
+//                }
+//                return false;
+                customItemList.getFilter().filter(query);
+                listView.setAdapter(customItemList);
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                customItemList.getFilter().filter(newText);
+                return false;
+            }
+        });
+
     }
 
 
@@ -90,19 +142,21 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     mProgressBar = new ProgressBar(MainActivity.this);
-                    mProgressBar.setVisibility(View.VISIBLE);
-                    getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                    mProgressBar.setVisibility(ProgressBar.VISIBLE);
+//                    getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+//                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 
                 }
             });
 
             String url = "https://bigvu-interviews-assets.s3.amazonaws.com/workshops.json";
-            JsonArrayRequest request = new JsonArrayRequest (Request.Method.GET, url, null,
-                    new Response.Listener<JSONArray >() {
+            JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
+                    new Response.Listener<JSONArray>() {
                         @Override
                         public void onResponse(JSONArray response) {
                             processResponse(response);
+
+                            customItemList.notifyDataSetChanged();
 
                         }
                     }, new Response.ErrorListener() {
@@ -111,17 +165,19 @@ public class MainActivity extends AppCompatActivity {
                     error.printStackTrace();
                 }
             });
-            mQueue.add(request);
 
 
             mainHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     if (mProgressBar.isShown())
-                        mProgressBar.setVisibility(View.GONE);
+                        mProgressBar.setProgress(ProgressBar.GONE);
                 }
             });
+
+            mQueue.add(request);
         }
+
     }
 
     private void processResponse(JSONArray response) {
@@ -136,15 +192,10 @@ public class MainActivity extends AppCompatActivity {
                 videoUrls.add(element.getString("video"));
 
             }
-            for(int i =0; i< imageUrls.size(); i++){
-                ImageView tempView = new ImageView(this);
-                Picasso.get().load(imageUrls.get(i)).into(tempView);
-                mImageViews.add(tempView);
-            }
-            customItemList.notifyDataSetChanged();
         } catch (JSONException e) {
             Log.e("TAG", e.getMessage());
 
         }
-    }}
+    }
+}
 
