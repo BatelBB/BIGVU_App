@@ -8,15 +8,17 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.ArrayList;
 
 public class CustomItemList extends ArrayAdapter {
     private ArrayList<String> name;
     private ArrayList<String> description;
-    private ArrayList<ImageView> imageid;
+    private ArrayList<String> imageid;
     private Activity context;
 
-    public CustomItemList(Activity context, ArrayList<String> name, ArrayList<String> description, ArrayList<ImageView> imageid) {
+    public CustomItemList(Activity context, ArrayList<String> name, ArrayList<String> description, ArrayList<String> imageid) {
         super(context, R.layout.row_item, name);
         this.context = context;
         this.name = name;
@@ -34,9 +36,12 @@ public class CustomItemList extends ArrayAdapter {
         TextView textViewCapital = (TextView) row.findViewById(R.id.textviewDesc);
         ImageView imageFlag = (ImageView) row.findViewById(R.id.person_image);
 
+
+
         textViewCountry.setText(name.get(position));
         textViewCapital.setText(description.get(position));
-        imageFlag = imageid.get(position);
+        Picasso.get().load(imageid.get(position)).fit().into(imageFlag);
+
         return  row;
     }
 }
