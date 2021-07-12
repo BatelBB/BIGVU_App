@@ -1,28 +1,20 @@
 package com.example.bigvu_app;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 import com.android.volley.Request;
@@ -30,23 +22,16 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -66,8 +51,9 @@ public class MainActivity extends AppCompatActivity {
     public CustomItemList customItemList;
 
     SearchView searchView;
-    Handler mainHandler = new Handler();
+    Handler mainHandler;
     ProgressBar mProgressBar;
+    ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,21 +64,29 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_main);
+        initSearchView();
         mQueue = Volley.newRequestQueue(this);
+        mainHandler = new Handler();
         new fetchData().start();
 
 
-        searchView = (SearchView) findViewById(R.id.searchView);
+
 
         TextView textView = new TextView(this);
         textView.setTypeface(Typeface.DEFAULT_BOLD);
 
 
-        ListView listView = (ListView) findViewById(R.id.list);
+        listView = (ListView) findViewById(R.id.list);
         mProgressBar = (ProgressBar) findViewById(R.id.indeterminateBar);
 
         customItemList = new CustomItemList(this, names, descriptions, imageUrls);
         listView.setAdapter(customItemList);
+//        customItemList.sort(new Comparator() {
+//            @Override
+//            public int compare(Object o, Object t1) {
+//                return o;
+//            }
+//        });
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
@@ -107,30 +101,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-//                for (int i = 0; i < descriptions.size(); i++) {
-//                    if (descriptions.get(i).contains(query)) {
-//                        customItemList.getFilter().filter(query);
-//                    } else {
-//                        Toast.makeText(MainActivity.this, "No Match found", Toast.LENGTH_LONG).show();
-//                        return false;
-//                    }
-//                }
-//                return false;
-                customItemList.getFilter().filter(query);
-                listView.setAdapter(customItemList);
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                customItemList.getFilter().filter(newText);
-                return false;
-            }
-        });
-
     }
 
 
@@ -138,40 +108,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void run() {
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mProgressBar = new ProgressBar(MainActivity.this);
-                    mProgressBar.setVisibility(ProgressBar.VISIBLE);
-//                    getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-//                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
-
-                }
-            });
-
             String url = "https://bigvu-interviews-assets.s3.amazonaws.com/workshops.json";
             JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                     new Response.Listener<JSONArray>() {
                         @Override
                         public void onResponse(JSONArray response) {
                             processResponse(response);
-
                             customItemList.notifyDataSetChanged();
+                            mProgressBar.setVisibility(View.GONE);
 
                         }
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     error.printStackTrace();
-                }
-            });
-
-
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (mProgressBar.isShown())
-                        mProgressBar.setProgress(ProgressBar.GONE);
                 }
             });
 
@@ -193,9 +143,42 @@ public class MainActivity extends AppCompatActivity {
 
             }
         } catch (JSONException e) {
-            Log.e("TAG", e.getMessage());
+            e.printStackTrace();
 
         }
     }
+
+    private void initSearchView(){
+        searchView = (SearchView) findViewById(R.id.searchView);
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+
+                ArrayList<String> filteredDesc = new ArrayList<>();
+                ArrayList<String> filteredNames = new ArrayList<>();
+                ArrayList<String> filteredImageUrl = new ArrayList<>();
+                for(int i=0; i< descriptions.size(); i++){
+                    if(descriptions.get(i).toLowerCase().contains(s.toLowerCase())) {
+                        filteredDesc.add(descriptions.get(i));
+                        filteredNames.add(names.get(i));
+                        filteredImageUrl.add(imageUrls.get(i));
+                    }
+                }
+                CustomItemList newCustomList = new CustomItemList(MainActivity.this,
+                        filteredNames, filteredDesc, filteredImageUrl);
+                listView.setAdapter(newCustomList);
+
+                return false;
+            }
+        });
+    }
+
+
 }
 
