@@ -1,9 +1,11 @@
 package com.example.bigvu_app;
 
 import android.app.Activity;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -32,15 +34,18 @@ public class CustomItemList extends ArrayAdapter {
         LayoutInflater inflater = context.getLayoutInflater();
         if(convertView==null)
             row = inflater.inflate(R.layout.row_item, null, true);
-        TextView textViewCountry = (TextView) row.findViewById(R.id.textViewName);
-        TextView textViewCapital = (TextView) row.findViewById(R.id.textviewDesc);
-        ImageView imageFlag = (ImageView) row.findViewById(R.id.person_image);
+        TextView textViewName = (TextView) row.findViewById(R.id.textViewName);
+        TextView textViewDesc = (TextView) row.findViewById(R.id.textviewDesc);
+        ImageView imagePerson = (ImageView) row.findViewById(R.id.person_image);
 
 
 
-        textViewCountry.setText(name.get(position));
-        textViewCapital.setText(description.get(position));
-        Picasso.get().load(imageid.get(position)).fit().into(imageFlag);
+        textViewName.setText(name.get(position));
+        textViewDesc.setText(description.get(position));
+
+        textViewDesc.setEllipsize(TextUtils.TruncateAt.END);
+        textViewDesc.setMaxLines(3);
+        Picasso.get().load(imageid.get(position)).fit().into(imagePerson);
 
         return  row;
     }
