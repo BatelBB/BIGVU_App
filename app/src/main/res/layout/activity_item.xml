@@ -4,29 +4,48 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     android:orientation="vertical"
+    android:background="#F7F7F7"
     tools:context=".ItemActivity">
 
     <TextView
         android:id="@+id/nameText"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:textColor="@android:color/holo_blue_light"
+        android:layout_marginTop="15dp"
+        android:textStyle="bold"
+        android:textSize="30sp"
+        android:layout_gravity="center"/>
 
     <TextView
         android:id="@+id/descText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:fontFamily="sans-serif-light"
+        android:textColor="@color/black"
+        android:textSize="22sp"
+        android:layout_gravity="center"
+        android:gravity="center"/>
 
     <TextView
         android:id="@+id/textText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="370dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="15dp"
+        android:fontFamily="sans-serif-light"
+        android:textSize="19sp"
+        android:textColor="@color/black"
+        android:gravity="center"/>
 
     <VideoView
         android:id="@+id/videoView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"/>
 
 
 </LinearLayout>
