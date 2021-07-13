@@ -4,9 +4,7 @@ package com.example.bigvu_app;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -14,7 +12,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
-import android.widget.TextView;
 
 
 import com.android.volley.Request;
@@ -29,9 +26,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -46,75 +40,83 @@ public class MainActivity extends AppCompatActivity {
     private static final String EXTRA_TEXT = "com.example.bigvu_app.text";
     private static final String EXTRA_VIDEO = "com.example.bigvu_app.video";
 
+    private static final String NAME = "name";
+    private static final String IMAGE = "image";
+    private static final String DESC = "description";
+    private static final String TEXT = "text";
+    private static final String VIDEO = "video";
 
     private RequestQueue mQueue;
     public CustomItemList customItemList;
 
-    SearchView searchView;
-    Handler mainHandler;
-    ProgressBar mProgressBar;
-    ListView listView;
+    public SearchView searchView;
+    public ProgressBar mProgressBar;
+    public ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Full screen
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_main);
+
+        //Initialize the search view method
         initSearchView();
+        //Adding new Volley request
         mQueue = Volley.newRequestQueue(this);
-        mainHandler = new Handler();
+        //Calling the runnable data to fetch Json objects
         new fetchData().start();
 
-
-
-
-        TextView textView = new TextView(this);
-        textView.setTypeface(Typeface.DEFAULT_BOLD);
-
-
+        //List view component
         listView = (ListView) findViewById(R.id.list);
+        //Progress bar component
         mProgressBar = (ProgressBar) findViewById(R.id.indeterminateBar);
 
+        //initializing the custom made list and setting it as the adapter of the listview.
         customItemList = new CustomItemList(this, names, descriptions, imageUrls);
         listView.setAdapter(customItemList);
+
+        //Supposed to be sort method
 //        customItemList.sort(new Comparator() {
 //            @Override
 //            public int compare(Object o, Object t1) {
 //                return o;
 //            }
 //        });
+
+        //On click listener for list items
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-
+                //Opening a new activity and sending the data.
                 Intent intent = new Intent(MainActivity.this, ItemActivity.class);
                 intent.putExtra(EXTRA_NAME, names.get(position));
                 intent.putExtra(EXTRA_DESCRIPTION, descriptions.get(position));
                 intent.putExtra(EXTRA_TEXT, texts.get(position));
                 intent.putExtra(EXTRA_VIDEO, videoUrls.get(position));
                 startActivity(intent);
-
             }
         });
-
     }
-
-
+    //Runnable anonymous class
     class fetchData extends Thread {
-
         @Override
         public void run() {
+            //Fetching the json object.
             String url = "https://bigvu-interviews-assets.s3.amazonaws.com/workshops.json";
             JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
                     new Response.Listener<JSONArray>() {
                         @Override
                         public void onResponse(JSONArray response) {
+                            //A method to deal with the JsonArray
                             processResponse(response);
+                            //After changing the list, updating the adapter
                             customItemList.notifyDataSetChanged();
+                            //Once the data is up the progress bar is gone.
                             mProgressBar.setVisibility(View.GONE);
 
                         }
@@ -124,33 +126,39 @@ public class MainActivity extends AppCompatActivity {
                     error.printStackTrace();
                 }
             });
-
+            //Volley request queue
             mQueue.add(request);
         }
-
     }
 
+    /**
+     * A private class to handle the JsonArray object.
+     * @param response The JsonArray object
+     */
     private void processResponse(JSONArray response) {
         try {
             for (int i = 0; i < response.length(); i++) {
+                //Takes every single Json object from the file
                 JSONObject element = response.getJSONObject(i);
-
-                names.add(element.getString("name"));
-                imageUrls.add(element.getString("image"));
-                descriptions.add(element.getString("description"));
-                texts.add(element.getString("text"));
-                videoUrls.add(element.getString("video"));
-
+                //Adda the relevant strings to the ArrayList
+                names.add(element.getString(NAME));
+                imageUrls.add(element.getString(IMAGE));
+                descriptions.add(element.getString(DESC));
+                texts.add(element.getString(TEXT));
+                videoUrls.add(element.getString(VIDEO));
             }
         } catch (JSONException e) {
             e.printStackTrace();
-
         }
     }
 
+    /**
+     * A private method to handle the search view
+     */
     private void initSearchView(){
+        //Initializes the search view component
         searchView = (SearchView) findViewById(R.id.searchView);
-
+        //A listener to query texts changes.
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String s) {
@@ -159,10 +167,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String s) {
-
+                //Temp ArrayLists for the relevant search result
                 ArrayList<String> filteredDesc = new ArrayList<>();
                 ArrayList<String> filteredNames = new ArrayList<>();
                 ArrayList<String> filteredImageUrl = new ArrayList<>();
+
+                //If the description list contains the search string,
+                //adds the different search items to the relevant ArrayLists.
                 for(int i=0; i< descriptions.size(); i++){
                     if(descriptions.get(i).toLowerCase().contains(s.toLowerCase())) {
                         filteredDesc.add(descriptions.get(i));
@@ -170,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
                         filteredImageUrl.add(imageUrls.get(i));
                     }
                 }
+                //A temp custom list to update the list view.
                 CustomItemList newCustomList = new CustomItemList(MainActivity.this,
                         filteredNames, filteredDesc, filteredImageUrl);
                 listView.setAdapter(newCustomList);
@@ -178,7 +190,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
-
 }
 

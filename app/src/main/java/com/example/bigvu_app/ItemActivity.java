@@ -2,11 +2,8 @@ package com.example.bigvu_app;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
-import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.MediaController;
@@ -34,26 +31,31 @@ public class ItemActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Full screen
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_item);
 
+        //The data sent from the main activity
         getExtraName = getIntent().getStringExtra(EXTRA_NAME);
         getExtraDescription = getIntent().getStringExtra(EXTRA_DESCRIPTION);
         getExtraText = getIntent().getStringExtra(EXTRA_TEXT);
         getExtraVideo = getIntent().getStringExtra(EXTRA_VIDEO);
 
+        //Initializes the components
         mVideoView = (VideoView) findViewById(R.id.videoView);
         mTextViewName = (TextView) findViewById(R.id.nameText);
         mTextViewDesc = (TextView) findViewById(R.id.descText);
         mTextViewText = (TextView) findViewById(R.id.textText);
 
+        //Adding the relevant text to the components
         mTextViewName.setText(getExtraName);
         mTextViewDesc.setText(getExtraDescription);
         mTextViewText.setText(getExtraText);
 
+        //Setting the video player and runs the video automatically
         mVideoView.setVideoURI(Uri.parse(getExtraVideo));
         mVideoView.setMediaController(new MediaController(this));
         mVideoView.requestFocus();
